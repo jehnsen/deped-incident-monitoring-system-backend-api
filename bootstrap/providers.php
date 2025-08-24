@@ -13,6 +13,7 @@ return [
     App\Providers\ExpenditureServiceProvider::class,
     App\Providers\HouseholdServiceEligibilityServiceProvider::class,
     App\Providers\HouseholdServiceProvider::class,
+    App\Providers\IncidentServiceProvider::class,
     App\Providers\IncomeServiceProvider::class,
     App\Providers\InventoryCategoryServiceProvider::class,
     App\Providers\InventoryServiceProvider::class,

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Incident\StoreIncidentRequest;
@@ -24,7 +24,7 @@ class IncidentController extends Controller
     public function store(StoreIncidentRequest $request): JsonResponse
     {
         $incident = $this->service->create($request->validated());
-        return (new IncidentResource($incident->load($this->service->repo->withAllRelations())))
+        return (new IncidentResource($incident->load($this->service->incidentRepository->withAllRelations())))
             ->response()->setStatusCode(201);
     }
 
@@ -38,7 +38,7 @@ class IncidentController extends Controller
     public function update(UpdateIncidentRequest $request, int $id): IncidentResource
     {
         $incident = $this->service->update($id, $request->validated());
-        return new IncidentResource($incident->load($this->service->repo->withAllRelations()));
+        return new IncidentResource($incident->load($this->service->incidentRepository->withAllRelations()));
     }
 
     public function destroy(int $id): JsonResponse

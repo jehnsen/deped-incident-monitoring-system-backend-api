@@ -5,18 +5,28 @@ namespace App\Repositories\Eloquent;
 use App\Models\Incident;
 use App\Repositories\Contracts\IncidentRepositoryInterface;
 
-class IncidentRepository extends BaseRepository implements IncidentRepositoryInterface
+class IncidentRepository implements IncidentRepositoryInterface
 {
-    public function __construct(Incident $model)
+    public function __construct(private readonly Incident $model) {}
+
+    public function paginate(int $perPage = 15, array $with = [])
     {
-        parent::__construct($model);
+        return $this->model->with($with)->paginate($perPage);
     }
 
+    public function find(int|string $id, array $with = [])
+    {
+        return $this->model->with($with)->findOrFail($id);
+    }
+
+    public function create(array $data)
+    {
+        return $this->model->create($data);
+    }
+
+    /** Relations your service uses */
     public function withAllRelations(): array
     {
-        return [
-            'type','school','reporter',
-            'attachments','statuses','affected','damages','assistance','occupancies'
-        ];
+        return ['reporter', 'school', 'division', 'attachments']; // adjust to your app
     }
 }

@@ -6,19 +6,9 @@ use App\Http\Controllers\SupplierController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Controllers\Api\{
-    IncidentController,
-    IncidentTypeController,
-    RegionController,
-    DivisionController,
-    SchoolController,
-    EvacuationCenterController,
-    AssistanceController,
-    DamageAssessmentController,
-    AffectedPopulationController,
-    IncidentAttachmentController,
-    EvacuationOccupancyController
-};
+
+// Make sure IncidentController exists and is imported
+use App\Http\Controllers\IncidentController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
