@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Repositories\Contracts\IncidentRepositoryInterface;
-use App\Repositories\Eloquent\IncidentRepository;
+use App\Interfaces\IncidentRepositoryInterface;
+use App\Repositories\IncidentRepository;
 use Illuminate\Support\ServiceProvider;
 
 class IncidentServiceProvider extends ServiceProvider

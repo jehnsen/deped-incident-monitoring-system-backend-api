@@ -2,24 +2,42 @@
 
 namespace App\Services;
 
-use App\Repositories\Contracts\IncidentRepositoryInterface;
-class IncidentService extends BaseService
+use App\Models\Incident;
+use Illuminate\Database\Eloquent\Collection;
+use App\Interfaces\IncidentRepositoryInterface;
+
+class IncidentService
 {
-    public $incidentRepository;
+    public function __construct(private readonly IncidentRepositoryInterface $repo) {}
 
-    public function __construct(protected IncidentRepositoryInterface $_incidentRepository)
+    public function all(): Collection
     {
-        parent::__construct($_incidentRepository);
-        $this->incidentRepository = $_incidentRepository;
+        return $this->repo->getAll();
+        // return $this->repo->getAllWithRelations();
     }
 
-    public function listWithRelations(int $perPage = 15)
+    public function paginate(int $perPage)
     {
-        return $this->incidentRepository->paginate($perPage, $this->incidentRepository->withAllRelations());
+        return $this->repo->paginate($perPage);
     }
 
-    public function getWithRelations(int|string $id)
+    public function get(int|string $id): Incident
     {
-        return $this->incidentRepository->find($id, $this->incidentRepository->withAllRelations());
+        return $this->repo->findById($id);
+    }
+
+    public function create(array $data): Incident
+    {
+        return $this->repo->create($data);
+    }
+
+    public function update(int|string $id, array $data): Incident
+    {
+        return $this->repo->update($id, $data);
+    }
+
+    public function delete(int|string $id): bool
+    {
+        return $this->repo->delete($id);
     }
 }

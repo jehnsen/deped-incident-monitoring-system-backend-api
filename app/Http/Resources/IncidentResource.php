@@ -16,13 +16,13 @@ class IncidentResource extends JsonResource
     {
         return [
             'id'          => $this->id,
-            'ref_no'      => $this->ref_no,
+            'refNo'       => $this->ref_no,
             'title'       => $this->title,
             'description' => $this->description,
             'status'      => $this->status?->value,
             'severity'    => $this->severity?->value,
-            'occurred_at' => $this->occurred_at,
-            'reported_at' => $this->reported_at,
+            'occurredAt'  => $this->occurred_at,
+            'reportedAt'  => $this->reported_at,
             'coords'      => ['lat' => $this->latitude, 'lng' => $this->longitude],
             'type'        => new IncidentTypeResource($this->whenLoaded('type')),
             'school'      => new SchoolResource($this->whenLoaded('school')),
@@ -37,8 +37,8 @@ class IncidentResource extends JsonResource
             'damages'     => DamageAssessmentResource::collection($this->whenLoaded('damages')),
             'assistance'  => AssistanceResource::collection($this->whenLoaded('assistance')),
             'occupancies' => EvacuationOccupancyResource::collection($this->whenLoaded('occupancies')),
-            'created_at'  => $this->created_at,
-            'updated_at'  => $this->updated_at,
+            'createdAt'   => $this->created_at,
+            'updatedAt'   => $this->updated_at,
         ];
     }
 }

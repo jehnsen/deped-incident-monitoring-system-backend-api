@@ -12,38 +12,62 @@ use Illuminate\Http\Request;
 
 class IncidentController extends Controller
 {
-    public function __construct(private readonly IncidentService $service) {}
-
-    public function index(Request $request)
+    public function __construct(private readonly IncidentService $service)
     {
-        $perPage = (int) $request->get('per_page', 15);
-        $data = $this->service->listWithRelations($perPage);
-        return IncidentResource::collection($data);
+        // $this->middleware('auth:api'); // uncomment if endpoints require auth
     }
 
+    /**
+     * GET /api/incidents
+     * Optional: ?per_page=15 to paginate
+     */
+    public function index(Request $request)
+    {
+        $perPage = (int) $request->query('per_page', 0);
+
+        if ($perPage > 0) {
+            $paginator = $this->service->paginate($perPage); // see "Add paginate()" below
+            return IncidentResource::collection($paginator);
+        }
+
+        return IncidentResource::collection($this->service->all());
+    }
+
+    /**
+     * POST /api/incidents
+     */
     public function store(StoreIncidentRequest $request): JsonResponse
     {
         $incident = $this->service->create($request->validated());
-        return (new IncidentResource($incident->load($this->service->incidentRepository->withAllRelations())))
-            ->response()->setStatusCode(201);
+
+        return (new IncidentResource($incident))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function show(int $id): IncidentResource
+    /**
+     * GET /api/incidents/{id}
+     */
+    public function show(int|string $id): IncidentResource
     {
-        $incident = $this->service->getWithRelations($id);
-        abort_unless($incident, 404);
+        return new IncidentResource($this->service->get($id));
+    }
+
+    /**
+     * PUT/PATCH /api/incidents/{id}
+     */
+    public function update(UpdateIncidentRequest $request, int|string $id): IncidentResource
+    {
+        $incident = $this->service->update($id, $request->validated());
         return new IncidentResource($incident);
     }
 
-    public function update(UpdateIncidentRequest $request, int $id): IncidentResource
+    /**
+     * DELETE /api/incidents/{id}
+     */
+    public function destroy(int|string $id): JsonResponse
     {
-        $incident = $this->service->update($id, $request->validated());
-        return new IncidentResource($incident->load($this->service->incidentRepository->withAllRelations()));
-    }
-
-    public function destroy(int $id): JsonResponse
-    {
-        abort_unless($this->service->delete($id), 404);
-        return response()->json(['message' => 'Deleted']);
+        $this->service->delete($id);
+        return response()->json(null, 204);
     }
 }
