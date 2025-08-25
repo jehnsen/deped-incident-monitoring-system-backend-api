@@ -26,6 +26,7 @@ return [
     App\Providers\RecordServiceProvider::class,
     App\Providers\ResidentServiceProvider::class,
     App\Providers\ResidentTransactionServiceProvider::class,
+    App\Providers\SchoolServiceProvider::class,
     App\Providers\ServiceEligibilityProvider::class,
     App\Providers\SupplierServiceProvider::class,
 ];

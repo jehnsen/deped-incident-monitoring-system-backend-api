@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 // Make sure IncidentController exists and is imported
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\SchoolController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -32,7 +33,7 @@ Route::middleware('auth:api')->group(function () {
     // Route::apiResource('incident-types', IncidentTypeController::class);
 
     Route::apiResource('incidents', IncidentController::class);
-
+    Route::apiResource('schools', SchoolController::class);
     // child/simple resources (optional: nest under incidents/{incidentId}/...)
     // Route::apiResource('incident-attachments', IncidentAttachmentController::class)->only(['index','store','show','destroy']);
     // Route::apiResource('status-histories', \App\Http\Controllers\Api\StatusHistoryController::class)->only(['index','store','show']);
