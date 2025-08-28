@@ -389,3 +389,14 @@ VALUES
  'Pre-emptive class suspension',
  'Governor announced suspension; school activated preparedness checklist.',
  'closed','medium','2025-07-15 19:30:00','2025-07-15 19:45:00',13.183000,121.205100,NOW(),NOW());
+
+-- user roles
+INSERT INTO roles (name, description, created_at, updated_at)
+VALUES
+('System Administrator', 'Full access to the system, manage all configurations and users.', NOW(), NOW()),
+('Regional DRRM Coordinator', 'Oversees disaster-related incidents and responses across the entire region.', NOW(), NOW()),
+('Division DRRM Officer', 'Manages incidents and responses within the division level.', NOW(), NOW()),
+('School Administrator', 'Manages incidents, staff, and reporting within their school.', NOW(), NOW()),
+('Department Head', 'Supervises department staff, verifies and escalates incident reports.', NOW(), NOW()),
+('Staff', 'Regular employee who can report and view incidents.', NOW(), NOW()),
+('Public User', 'External user with limited access, can file public incident reports.', NOW(), NOW());
