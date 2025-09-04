@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\IncidentTypeController;
 use App\Http\Controllers\SupplierController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 // Make sure IncidentController exists and is imported
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DivisionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -34,6 +37,9 @@ Route::middleware('auth:api')->group(function () {
 
     Route::apiResource('incidents', IncidentController::class);
     Route::apiResource('schools', SchoolController::class);
+    Route::apiResource('departments', DepartmentController::class);
+    Route::apiResource('divisions', DivisionController::class);
+    Route::apiResource('incident-types', IncidentTypeController::class);
     // child/simple resources (optional: nest under incidents/{incidentId}/...)
     // Route::apiResource('incident-attachments', IncidentAttachmentController::class)->only(['index','store','show','destroy']);
     // Route::apiResource('status-histories', \App\Http\Controllers\Api\StatusHistoryController::class)->only(['index','store','show']);

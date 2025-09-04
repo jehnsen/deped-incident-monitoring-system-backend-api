@@ -41,7 +41,9 @@ cd /storage/logs
 sudo truncate -s 0 laravel.log
 less laravel.log
 
-
+php artisan optimize:clear
+php artisan route:clear
+php artisan config:cache
 
 
 ## TODOs:

@@ -1,5 +1,5 @@
 <?php
-namespace App\Repositories\Eloquent;
+namespace App\Repositories;
 
 use App\Models\Department;
 use App\Interfaces\DepartmentRepositoryInterface;
