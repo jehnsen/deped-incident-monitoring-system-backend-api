@@ -1,6 +1,8 @@
 <?php
 
 
+use App\Http\Controllers\AssistanceController;
+use App\Http\Controllers\DamageAssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\IncidentTypeController;
 use App\Http\Controllers\SupplierController;
@@ -31,15 +33,15 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('user', AuthController::class);
 
     // Route::apiResource('regions', RegionController::class);
-    // Route::apiResource('divisions', DivisionController::class);
-    // Route::apiResource('schools', SchoolController::class);
-    // Route::apiResource('incident-types', IncidentTypeController::class);
-
     Route::apiResource('incidents', IncidentController::class);
     Route::apiResource('schools', SchoolController::class);
     Route::apiResource('departments', DepartmentController::class);
     Route::apiResource('divisions', DivisionController::class);
     Route::apiResource('incident-types', IncidentTypeController::class);
+
+    Route::apiResource('damage-assessments', DamageAssessmentController::class);
+    Route::apiResource('assistances', AssistanceController::class);
+
     // child/simple resources (optional: nest under incidents/{incidentId}/...)
     // Route::apiResource('incident-attachments', IncidentAttachmentController::class)->only(['index','store','show','destroy']);
     // Route::apiResource('status-histories', \App\Http\Controllers\Api\StatusHistoryController::class)->only(['index','store','show']);
