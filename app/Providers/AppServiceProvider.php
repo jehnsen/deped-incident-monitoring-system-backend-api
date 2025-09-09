@@ -2,10 +2,20 @@
 
 namespace App\Providers;
 
+use App\Interfaces\AffectedPopulationRepositoryInterface;
 use App\Interfaces\AssistanceRepositoryInterface;
 use App\Interfaces\DamageAssessmentRepositoryInterface;
+use App\Interfaces\EvacuationCenterRepositoryInterface;
+use App\Interfaces\EvacuationOccupancyRepositoryInterface;
+use App\Interfaces\IncidentAttachmentRepositoryInterface;
+use App\Interfaces\IncidentStatusHistoryRepositoryInterface;
+use App\Repositories\AffectedPopulationRepository;
 use App\Repositories\AssistanceRepository;
 use App\Repositories\DamageAssessmentRepository;
+use App\Repositories\EvacuationCenterRepository;
+use App\Repositories\EvacuationOccupancyRepository;
+use App\Repositories\IncidentAttachmentRepository;
+use App\Repositories\IncidentStatusHistoryRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +27,14 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(DamageAssessmentRepositoryInterface::class, DamageAssessmentRepository::class);
         $this->app->bind(AssistanceRepositoryInterface::class, AssistanceRepository::class);
+        
+        $this->app->bind(IncidentAttachmentRepositoryInterface::class, IncidentAttachmentRepository::class);
+        $this->app->bind(IncidentStatusHistoryRepositoryInterface::class, IncidentStatusHistoryRepository::class);
+
+        $this->app->bind(EvacuationCenterRepositoryInterface::class, EvacuationCenterRepository::class);
+        $this->app->bind(EvacuationOccupancyRepositoryInterface::class, EvacuationOccupancyRepository::class);
+        
+        $this->app->bind(AffectedPopulationRepositoryInterface::class, AffectedPopulationRepository::class);
     }
 
     /**

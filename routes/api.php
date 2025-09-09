@@ -1,9 +1,14 @@
 <?php
 
 
+use App\Http\Controllers\AffectedPopulationController;
 use App\Http\Controllers\AssistanceController;
 use App\Http\Controllers\DamageAssessmentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EvacuationCenterController;
+use App\Http\Controllers\EvacuationOccupancyController;
+use App\Http\Controllers\IncidentAttachmentController;
+use App\Http\Controllers\IncidentStatusHistoryController;
 use App\Http\Controllers\IncidentTypeController;
 use App\Http\Controllers\SupplierController;
 use Illuminate\Http\Request;
@@ -38,19 +43,13 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('departments', DepartmentController::class);
     Route::apiResource('divisions', DivisionController::class);
     Route::apiResource('incident-types', IncidentTypeController::class);
-
+    Route::apiResource('incident-attachments', IncidentAttachmentController::class);
+    Route::apiResource('incident-status-histories', IncidentStatusHistoryController::class);
+    
     Route::apiResource('damage-assessments', DamageAssessmentController::class);
     Route::apiResource('assistances', AssistanceController::class);
 
-    // child/simple resources (optional: nest under incidents/{incidentId}/...)
-    // Route::apiResource('incident-attachments', IncidentAttachmentController::class)->only(['index','store','show','destroy']);
-    // Route::apiResource('status-histories', \App\Http\Controllers\Api\StatusHistoryController::class)->only(['index','store','show']);
-    // Route::apiResource('affected-populations', AffectedPopulationController::class)->only(['index','store','show','update','destroy']);
-    // Route::apiResource('damage-assessments', DamageAssessmentController::class)->only(['index','store','show','update','destroy']);
-    // Route::apiResource('assistance', AssistanceController::class)->only(['index','store','show','update','destroy']);
-
-    // Route::apiResource('evacuation-centers', EvacuationCenterController::class);
-    // Route::apiResource('evacuation-occupancies', EvacuationOccupancyController::class)->only(['index','store','show','update','destroy']);
-
-
+    Route::apiResource('affected-populations', AffectedPopulationController::class);
+    Route::apiResource('evacuation-centers', EvacuationCenterController::class);
+    Route::apiResource('evacuation-occupancies', EvacuationOccupancyController::class);
 });

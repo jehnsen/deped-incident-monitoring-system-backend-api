@@ -29,7 +29,11 @@ class DamageAssessmentController extends Controller
 
    public function show(int $id)
    {
-      return new DamageAssessmentResource($this->_damageAssessmentRepositoryInterface->find($id));
+      $model = $this->_damageAssessmentRepositoryInterface->find($id);
+      if (!$model) {
+         return response()->json(['message' => 'Not Found'], 404);
+      }
+      return new DamageAssessmentResource($model);
    }
 
    public function store(StoreDamageAssessmentRequest $request)
@@ -40,8 +44,9 @@ class DamageAssessmentController extends Controller
 
    public function update(UpdateDamageAssessmentRequest $request, int $id)
    {
-      $model = $this->_damageAssessmentRepositoryInterface->update($id, $request->validated());
-      return new DamageAssessmentResource($model);
+      $model = $this->_damageAssessmentRepositoryInterface->find($id);
+      $updatedModel = $this->_damageAssessmentRepositoryInterface->update($model, $request->validated());
+      return new DamageAssessmentResource($updatedModel);
    }
 
    public function destroy(int $id)
