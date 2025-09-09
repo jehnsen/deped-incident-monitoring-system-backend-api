@@ -7,15 +7,25 @@ use App\Interfaces\AssistanceRepositoryInterface;
 use App\Interfaces\DamageAssessmentRepositoryInterface;
 use App\Interfaces\EvacuationCenterRepositoryInterface;
 use App\Interfaces\EvacuationOccupancyRepositoryInterface;
+use App\Interfaces\HazardAssessmentRepositoryInterface;
+use App\Interfaces\HazardRepositoryInterface;
 use App\Interfaces\IncidentAttachmentRepositoryInterface;
 use App\Interfaces\IncidentStatusHistoryRepositoryInterface;
+use App\Interfaces\IssuanceAttachmentRepositoryInterface;
+use App\Interfaces\IssuanceRepositoryInterface;
+use App\Interfaces\TagRepositoryInterface;
 use App\Repositories\AffectedPopulationRepository;
 use App\Repositories\AssistanceRepository;
 use App\Repositories\DamageAssessmentRepository;
 use App\Repositories\EvacuationCenterRepository;
 use App\Repositories\EvacuationOccupancyRepository;
+use App\Repositories\HazardAssessmentRepository;
+use App\Repositories\HazardRepository;
 use App\Repositories\IncidentAttachmentRepository;
 use App\Repositories\IncidentStatusHistoryRepository;
+use App\Repositories\IssuanceAttachmentRepository;
+use App\Repositories\IssuanceRepository;
+use App\Repositories\TagRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +45,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EvacuationOccupancyRepositoryInterface::class, EvacuationOccupancyRepository::class);
         
         $this->app->bind(AffectedPopulationRepositoryInterface::class, AffectedPopulationRepository::class);
+
+        $this->app->bind(HazardRepositoryInterface::class, HazardRepository::class);
+        $this->app->bind(HazardAssessmentRepositoryInterface::class, HazardAssessmentRepository::class);
+        $this->app->bind(IssuanceRepositoryInterface::class, IssuanceRepository::class);
+
+        $this->app->bind(IssuanceAttachmentRepositoryInterface::class, IssuanceAttachmentRepository::class);
+        $this->app->bind(TagRepositoryInterface::class, TagRepository::class);
     }
 
     /**

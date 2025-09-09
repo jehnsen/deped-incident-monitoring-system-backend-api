@@ -7,10 +7,15 @@ use App\Http\Controllers\DamageAssessmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EvacuationCenterController;
 use App\Http\Controllers\EvacuationOccupancyController;
+use App\Http\Controllers\HazardAssessmentController;
+use App\Http\Controllers\HazardController;
 use App\Http\Controllers\IncidentAttachmentController;
 use App\Http\Controllers\IncidentStatusHistoryController;
 use App\Http\Controllers\IncidentTypeController;
+use App\Http\Controllers\IssuanceAttachmentController;
+use App\Http\Controllers\IssuanceController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\TagController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -45,6 +50,12 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('incident-types', IncidentTypeController::class);
     Route::apiResource('incident-attachments', IncidentAttachmentController::class);
     Route::apiResource('incident-status-histories', IncidentStatusHistoryController::class);
+
+    Route::apiResource('hazards', HazardController::class);
+    Route::apiResource('hazard-assessments', HazardAssessmentController::class);
+    Route::apiResource('issuances', IssuanceController::class);
+    Route::apiResource('issuance-attachments', IssuanceAttachmentController::class);
+    Route::apiResource('tags', TagController::class);
     
     Route::apiResource('damage-assessments', DamageAssessmentController::class);
     Route::apiResource('assistances', AssistanceController::class);
@@ -52,4 +63,6 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('affected-populations', AffectedPopulationController::class);
     Route::apiResource('evacuation-centers', EvacuationCenterController::class);
     Route::apiResource('evacuation-occupancies', EvacuationOccupancyController::class);
+
+    
 });

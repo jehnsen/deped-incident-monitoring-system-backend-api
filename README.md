@@ -2,7 +2,7 @@ Setup:
 ## php artisan install:api 
 # php artisan passport:install
 # php artisan passport:client --personal
-# php artisan migrate --path=/database/migrations/
+# php artisan migrate --path=/database/migrations/ (remove all oauth-related migrations)
 # php artisan db:seed --class=BarangaySeeder OR php artisan db:seed
 # php artisan db:seed --class=ResidentsSeeder OR php artisan db:seed
 
@@ -47,6 +47,4 @@ php artisan config:cache
 
 
 ## TODOs:
-# fix reports on issuances / certificate
-# print function for blotters
-# print function for resident's profile
+# add entities: issuances, hazard, equipment, programs 
