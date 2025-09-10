@@ -11,8 +11,10 @@ use App\Interfaces\HazardAssessmentRepositoryInterface;
 use App\Interfaces\HazardRepositoryInterface;
 use App\Interfaces\IncidentAttachmentRepositoryInterface;
 use App\Interfaces\IncidentStatusHistoryRepositoryInterface;
+use App\Interfaces\InventoryRepositoryInterface;
 use App\Interfaces\IssuanceAttachmentRepositoryInterface;
 use App\Interfaces\IssuanceRepositoryInterface;
+use App\Interfaces\ProgramRepositoryInterface;
 use App\Interfaces\TagRepositoryInterface;
 use App\Repositories\AffectedPopulationRepository;
 use App\Repositories\AssistanceRepository;
@@ -23,8 +25,10 @@ use App\Repositories\HazardAssessmentRepository;
 use App\Repositories\HazardRepository;
 use App\Repositories\IncidentAttachmentRepository;
 use App\Repositories\IncidentStatusHistoryRepository;
+use App\Repositories\InventoryRepository;
 use App\Repositories\IssuanceAttachmentRepository;
 use App\Repositories\IssuanceRepository;
+use App\Repositories\ProgramRepository;
 use App\Repositories\TagRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -52,6 +56,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(IssuanceAttachmentRepositoryInterface::class, IssuanceAttachmentRepository::class);
         $this->app->bind(TagRepositoryInterface::class, TagRepository::class);
+
+        $this->app->bind(InventoryRepositoryInterface::class, InventoryRepository::class);
+        $this->app->bind(ProgramRepositoryInterface::class, ProgramRepository::class);
     }
 
     /**

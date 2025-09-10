@@ -56,4 +56,10 @@ class IncidentTypeRepository implements IncidentTypeRepositoryInterface
       // Return an array of relations to eager load
       return [];
    }
+
+   public function getIncidentTypeById(int|string $id)
+   {
+      // Implement logic to get an IncidentType by id
+      return IncidentType::find($id);
+   }
 }

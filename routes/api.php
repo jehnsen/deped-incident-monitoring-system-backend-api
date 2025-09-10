@@ -12,8 +12,10 @@ use App\Http\Controllers\HazardController;
 use App\Http\Controllers\IncidentAttachmentController;
 use App\Http\Controllers\IncidentStatusHistoryController;
 use App\Http\Controllers\IncidentTypeController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\IssuanceAttachmentController;
 use App\Http\Controllers\IssuanceController;
+use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TagController;
 use Illuminate\Http\Request;
@@ -64,5 +66,7 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('evacuation-centers', EvacuationCenterController::class);
     Route::apiResource('evacuation-occupancies', EvacuationOccupancyController::class);
 
-    
+    Route::apiResource('inventories', InventoryController::class);
+    Route::apiResource('programs', ProgramController::class);
+
 });
