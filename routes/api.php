@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\AffectedPopulationController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AssistanceController;
 use App\Http\Controllers\DamageAssessmentController;
 use App\Http\Controllers\AuthController;
@@ -68,5 +69,24 @@ Route::middleware('auth:api')->group(function () {
 
     Route::apiResource('inventories', InventoryController::class);
     Route::apiResource('programs', ProgramController::class);
+
+    // analytics
+    Route::get('/analytics/incidents/monthly-trends', [AnalyticsController::class, 'getMonthlyTrends']);
+    Route::get('/analytics/incidents/by-hazard-type', [AnalyticsController::class, 'getIncidentsByHazardType']);
+
+     // Dashboard KPI summary
+    Route::get('/dashboard/summary', [AnalyticsController::class, 'dashboardSummary']);
+
+    // Division office summary cards (for the “MIMAROPA Division Offices” view)
+    Route::get('/analytics/divisions/cards', [AnalyticsController::class, 'getDivisionCards']);
+
+    // School cards (for the “School Incident Reports” view)
+    Route::get('/analytics/schools/cards', [AnalyticsController::class, 'getSchoolCards']);
+
+    // Issuances list (for Official Issuances page)
+    Route::get('/analytics/issuances', [AnalyticsController::class, 'getIssuances']);
+
+    // Programs list (for DRRM Programs Directory)
+    Route::get('/analytics/programs', [AnalyticsController::class, 'getPrograms']);
 
 });

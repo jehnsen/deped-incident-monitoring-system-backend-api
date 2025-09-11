@@ -47,4 +47,6 @@ php artisan config:cache
 
 
 ## TODOs:
-# add entities: issuances, hazard, equipment, programs 
+- add `student_count` in school table
+- add `status`, `beneficiaries_count` in program table
+

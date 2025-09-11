@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Interfaces\AffectedPopulationRepositoryInterface;
+use App\Interfaces\AnalyticsRepositoryInterface;
 use App\Interfaces\AssistanceRepositoryInterface;
 use App\Interfaces\DamageAssessmentRepositoryInterface;
 use App\Interfaces\EvacuationCenterRepositoryInterface;
@@ -17,6 +18,7 @@ use App\Interfaces\IssuanceRepositoryInterface;
 use App\Interfaces\ProgramRepositoryInterface;
 use App\Interfaces\TagRepositoryInterface;
 use App\Repositories\AffectedPopulationRepository;
+use App\Repositories\AnalyticsRepository;
 use App\Repositories\AssistanceRepository;
 use App\Repositories\DamageAssessmentRepository;
 use App\Repositories\EvacuationCenterRepository;
@@ -59,6 +61,8 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(InventoryRepositoryInterface::class, InventoryRepository::class);
         $this->app->bind(ProgramRepositoryInterface::class, ProgramRepository::class);
+
+        $this->app->bind(AnalyticsRepositoryInterface::class, AnalyticsRepository::class);
     }
 
     /**
