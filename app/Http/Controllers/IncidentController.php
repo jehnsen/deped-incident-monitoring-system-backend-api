@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Incident\StoreIncidentRequest;
 use App\Http\Requests\Incident\UpdateIncidentRequest;
+use App\Http\Resources\IncidentDetailsResource;
 use App\Http\Resources\IncidentResource;
 use App\Services\IncidentService;
 use Illuminate\Http\JsonResponse;
@@ -69,5 +70,11 @@ class IncidentController extends Controller
     {
         $this->service->delete($id);
         return response()->json(null, 204);
+    }
+
+    public function details(int $id)
+    {
+        $incident = $this->service->getDetails($id);
+        return new IncidentDetailsResource($incident);
     }
 }

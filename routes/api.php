@@ -47,6 +47,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Route::apiResource('regions', RegionController::class);
     Route::apiResource('incidents', IncidentController::class);
+    Route::get('/incidents/{id}/details', [IncidentController::class, 'details']);
+
     Route::apiResource('schools', SchoolController::class);
     Route::apiResource('departments', DepartmentController::class);
     Route::apiResource('divisions', DivisionController::class);

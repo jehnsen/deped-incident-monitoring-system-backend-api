@@ -35,11 +35,12 @@ class Incident extends Model
     public function type(): BelongsTo { return $this->belongsTo(IncidentType::class,'type_id'); }
     public function school(): BelongsTo { return $this->belongsTo(School::class); }
     public function reporter(): BelongsTo { return $this->belongsTo(User::class,'reported_by_user_id'); }
-
     public function attachments(): HasMany { return $this->hasMany(IncidentAttachment::class); }
     public function statuses(): HasMany { return $this->hasMany(IncidentStatusHistory::class); }
     public function affected(): HasMany { return $this->hasMany(AffectedPopulation::class); }
     public function damages(): HasMany { return $this->hasMany(DamageAssessment::class); }
     public function assistance(): HasMany { return $this->hasMany(Assistance::class); }
     public function occupancies(): HasMany { return $this->hasMany(EvacuationOccupancy::class); }
+    public function timelines(): HasMany { return $this->hasMany(IncidentTimeline::class); }
+    public function issuances(): HasMany { return $this->hasMany(Issuance::class); }
 }

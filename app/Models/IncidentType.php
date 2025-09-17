@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class IncidentType extends Model
 {
-    protected $fillable = ['name','description','color'];
+    protected $fillable = ['name','description','color', 'code'];
 }

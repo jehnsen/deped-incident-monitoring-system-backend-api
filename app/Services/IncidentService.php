@@ -40,4 +40,11 @@ class IncidentService
     {
         return $this->repo->delete($id);
     }
+
+    public function getDetails(int $id): Incident
+    {
+        $incident = $this->repo->findWithDetails($id);
+        abort_if(!$incident, 404, 'Incident not found');
+        return $incident;
+    }
 }

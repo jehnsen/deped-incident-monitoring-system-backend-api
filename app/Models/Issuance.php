@@ -33,4 +33,9 @@ class Issuance extends Model
     {
         return $this->belongsToMany(Hazard::class, 'issuance_hazard');
     }
+
+    public function incident(): BelongsToMany
+    {
+        return $this->belongsToMany(Incident::class, 'incidents');
+    }
 }

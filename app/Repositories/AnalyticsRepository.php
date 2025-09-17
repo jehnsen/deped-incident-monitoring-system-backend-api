@@ -390,11 +390,11 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
 
         $query = Issuance::query()
             ->when($q, fn($qq) => $qq->where(function($x) use ($q) {
-                $x->where('title','like',"%$q%")
-                  ->orWhere('ref_no','like',"%$q%");
+                $x->where('title','like',"%$q%");
+                  // ->orWhere('ref_no','like',"%$q%");
             }))
             ->when($type, fn($qq) => $qq->where('type', $type))
-            ->when($year, fn($qq) => $qq->where('year', $year))
+            ->when($year, fn($qq) => $qq->where('series_year', $year))
             ->when($scope, fn($qq) => $qq->where('scope', $scope))
             // If you have a pivot like issuance_hazards with type_id referencing incident_types:
             ->when($hazardTypeId, function($qq) use ($hazardTypeId) {
@@ -408,9 +408,9 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
 
         $total = (clone $query)->count();
 
-        $rows = $query->orderByDesc('effective_at')
+        $rows = $query->orderByDesc('effective_date')
             ->forPage($page, $perPage)
-            ->get(['id','ref_no','title','type','year','scope','effective_at']);
+            ->get(['id','title','type','series_year','scope','effective_date']);
 
         return [
             'data' => $rows,

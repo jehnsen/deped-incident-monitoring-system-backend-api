@@ -21,4 +21,5 @@ interface IncidentRepositoryInterface
     public function update(int|string $id, array $data): Incident;
 
     public function delete(int|string $id): bool;
+    public function findWithDetails(int $id): Incident;
 }
