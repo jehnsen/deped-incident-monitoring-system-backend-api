@@ -68,17 +68,17 @@ class IncidentRepository implements IncidentRepositoryInterface
             ->with([
                 // light parent refs
                 'reporter:id,full_name,name',
-                // 'reviewer:id,full_name,name',
+                'reviewer:id,full_name,email',
                 'school:id,name,address,latitude,longitude',
-                // 'statusHistories' => fn($q) => $q->orderByDesc('changed_at')
-                //     ->select(['id','incident_id','from_status','to_status','notes','changed_by_user_id','changed_at'])
-                //     ->with(['incident:id', 'user:id,full_name,name']),
+                'statusHistories' => fn($q) => $q->orderByDesc('changed_at')
+                    ->select(['id','incident_id','from_status','to_status','notes','changed_by_user_id','changed_at'])
+                    ->with(['incident:id', 'user:id,full_name,name']),
                 'attachments:id,incident_id,file_path,file_type,original_name,created_at',
-                'issuances' => fn($q) => $q->select(['issuances.id','code','title','category','issued_at'])
-                    ->with(['tags:id,name'])->orderBy('issued_at','desc'),
+                'issuances' => fn($q) => $q->select(['issuances.id', 'issuances.incident_id', 'issuances.type', 'issuances.title'])
+                    ->with(['tags:id,name'])->orderBy('created_at','desc'),
                 'timelines' => fn($q) => $q->orderBy('timestamp')
                     ->select(['id','incident_id','event','performed_by_user_id','timestamp'])
-                    ->with(['performer:id,full_name,name'])
+                    ->with(['performer:id,full_name,email'])
             ])
             ->select([
                 'id','title','type_id','severity',
@@ -90,7 +90,7 @@ class IncidentRepository implements IncidentRepositoryInterface
                 'status','review_decision','review_comments','reviewed_by_user_id','reviewed_at',
                 'created_at','updated_at'
             ])
-            ->with(['incidentType:id,code,name']) // if you have IncidentType
+            ->with(['type:id,name'])
             ->find($id);
     }
 

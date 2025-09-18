@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\AffectedPopulationController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AssistanceController;
 use App\Http\Controllers\DamageAssessmentController;
 use App\Http\Controllers\AuthController;
@@ -48,6 +49,7 @@ Route::middleware('auth:api')->group(function () {
     // Route::apiResource('regions', RegionController::class);
     Route::apiResource('incidents', IncidentController::class);
     Route::get('/incidents/{id}/details', [IncidentController::class, 'details']);
+    Route::post('/incidents/{id}/review', [IncidentController::class, 'review']);
 
     Route::apiResource('schools', SchoolController::class);
     Route::apiResource('departments', DepartmentController::class);
@@ -76,7 +78,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/analytics/incidents/monthly-trends', [AnalyticsController::class, 'getMonthlyTrends']);
     Route::get('/analytics/incidents/by-hazard-type', [AnalyticsController::class, 'getIncidentsByHazardType']);
 
-     // Dashboard KPI summary
+    // Dashboard KPI summary
     Route::get('/dashboard/summary', [AnalyticsController::class, 'dashboardSummary']);
 
     // Division office summary cards (for the “MIMAROPA Division Offices” view)
@@ -90,5 +92,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Programs list (for DRRM Programs Directory)
     Route::get('/analytics/programs', [AnalyticsController::class, 'getPrograms']);
+
+    Route::apiResource('activity-logs',ActivityLogController::class);
 
 });

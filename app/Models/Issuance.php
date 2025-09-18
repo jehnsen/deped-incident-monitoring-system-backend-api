@@ -26,7 +26,7 @@ class Issuance extends Model
 
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class, 'issuance_tags');
+        return $this->belongsToMany(Tag::class, 'issuance_tags', 'issuance_id', 'tag_id')->withTimestamps();
     }
 
     public function hazards(): BelongsToMany
@@ -37,5 +37,15 @@ class Issuance extends Model
     public function incident(): BelongsToMany
     {
         return $this->belongsToMany(Incident::class, 'incidents');
+    }
+
+    public function incidents(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Incident::class,
+            'incident_issuances',   // pivot table
+            'issuance_id',          // FK on pivot to this model
+            'incident_id'           // FK on pivot to the related model
+        )->withTimestamps();
     }
 }

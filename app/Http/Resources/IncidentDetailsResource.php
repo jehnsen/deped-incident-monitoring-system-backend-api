@@ -13,8 +13,8 @@ class IncidentDetailsResource extends JsonResource
             'title' => $this->title,
             'type' => [
                 'id' => $this->incident_type_id,
-                'name' => $this->whenLoaded('incidentType', fn() => $this->incidentType?->name),
-                'code' => $this->whenLoaded('incidentType', fn() => $this->incidentType?->code),
+                'name' => $this->whenLoaded('type', fn() => $this->incidentType?->name),
+                // 'code' => $this->whenLoaded('incidentType', fn() => $this->incidentType?->code),
             ],
             'severity' => $this->severity,
 
@@ -76,10 +76,11 @@ class IncidentDetailsResource extends JsonResource
             'issuances' => $this->whenLoaded('issuances', fn() =>
                 $this->issuances->map(fn($i) => [
                     'id' => $i->id,
-                    'code' => $i->code,
+                    'incident_id' => $i->incident_id,
+                    // 'code' => $i->code,
                     'title' => $i->title,
-                    'category' => $i->category ?? null,
-                    'issued_at' => optional($i->issued_at ?? null)?->toIso8601String(),
+                    'type' => $i->type ?? null,
+                    // 'created_at' => optional($i->created_at ?? null)?->toIso8601String(),
                     'tags' => method_exists($i,'tags') ? $i->tags->pluck('name') : [],
                 ])
             ),

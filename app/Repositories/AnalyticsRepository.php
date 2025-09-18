@@ -134,106 +134,293 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
    /** ---------------- Division cards ---------------- */
    public function getDivisionCards(array $filters): array
    {
-      $regionId = $filters['region_id'] ?? null;
+      $regionId    = $filters['region_id'] ?? null;
       $divisionIds = $filters['division_ids'] ?? [];
-      $dateFrom = $filters['date_from'] ?? null;
-      $dateTo = $filters['date_to'] ?? null;
-      $topHazards = max(1, (int) ($filters['top_hazards'] ?? 3));
+      $dateFrom    = $filters['date_from'] ?? null;
+      $dateTo      = $filters['date_to'] ?? null;
+      $topHazards  = max(1, (int) ($filters['top_hazards'] ?? 3));
 
-      // time windows (current + previous month window for delta)
+      // time windows (current + previous month)
       $currFrom = $dateFrom ? now()->parse($dateFrom)->startOfDay() : now()->startOfMonth();
-      $currTo = $dateTo ? now()->parse($dateTo)->endOfDay() : now()->endOfMonth();
+      $currTo   = $dateTo   ? now()->parse($dateTo)->endOfDay()   : now()->endOfMonth();
       $prevFrom = (clone $currFrom)->subMonth()->startOfMonth();
-      $prevTo = (clone $currTo)->subMonth()->endOfMonth();
+      $prevTo   = (clone $currTo)->subMonth()->endOfMonth();
+
+      // $currFrom = now()->subDays(90)->startOfDay();
+      // $currTo   = now()->endOfDay();
+      // $prevFrom = (clone $currFrom)->subDays(90);
+      // $prevTo   = (clone $currFrom)->subSecond();
 
       // use reported_at/occurred_at/created_at
       $dateExpr = DB::raw('COALESCE(incidents.reported_at, incidents.occurred_at, incidents.created_at)');
 
-      // status buckets
-      $resolvedStatuses = ["approved", "resolved", "closed"];
-      $pendingStatuses = ["open", "pending", "pending_review", "in_progress"];
+      // ---- STATUS NORMALIZATION (case/space/underscore/hyphen tolerant) ----
+      // Normalize status to a space-separated lowercase token:
+      // e.g. 'Under Review', 'under_review', 'UNDER-REVIEW' -> 'under review'
+      $statusNorm = "REPLACE(REPLACE(LOWER(incidents.status), '_', ' '), '-', ' ')";
 
-      $resolvedIn = "'" . implode("','", array_map('addslashes', $resolvedStatuses)) . "'";
-      $pendingIn = "'" . implode("','", array_map('addslashes', $pendingStatuses)) . "'";
+      $resolvedSet = ["approved","resolved","closed"];
+      $pendingSet  = ["open","pending","under review","pending review","in progress"];
+
+      $toSqlIn = fn(array $arr) =>
+         "'" . implode("','", array_map(static fn($s) => addslashes(strtolower($s)), $arr)) . "'";
+
+      $resolvedIn = $toSqlIn($resolvedSet);
+      $pendingIn  = $toSqlIn($pendingSet);
+      // ---------------------------------------------------------------------
 
       // pull the list of divisions to summarize
-      $divisions = \App\Models\Division::query()
+      $divisions = Division::query()
          ->when($regionId, fn($q) => $q->where('region_id', $regionId))
          ->when(!empty($divisionIds), fn($q) => $q->whereIn('id', $divisionIds))
-         ->select(['id', 'name'])
+         ->select(['id','name'])
          ->get();
 
       $cards = [];
 
       foreach ($divisions as $div) {
+         // schools + students (fallback across common column names)
+         $schoolsAgg = School::query()
+               ->where('division_id', $div->id)
+               ->selectRaw("
+                  COUNT(*) AS schools,
+                  COALESCE(
+                     SUM(COALESCE(student_count, total_students, enrollment, 0)),
+                     0
+                  ) AS students
+               ")
+               ->first();
 
-         // schools + students (rename student_count if your column differs)
-         $schoolsAgg = \App\Models\School::query()
-            ->where('division_id', $div->id)
-            ->selectRaw('COUNT(*) as schools, COALESCE(SUM(student_count),0) as students')
-            ->first();
-
-         // current window totals (by correct date field)
-         $curr = \App\Models\Incident::query()
-            ->whereBetween($dateExpr, [$currFrom, $currTo])
-            ->whereHas('school', fn($q) => $q->where('division_id', $div->id))
-            ->selectRaw("
-                COUNT(*) as total,
-                SUM(CASE WHEN incidents.status IN ($resolvedIn) THEN 1 ELSE 0 END) as resolved,
-                SUM(CASE WHEN incidents.status IN ($pendingIn)  THEN 1 ELSE 0 END) as pending
-            ")
-            ->first();
+         // current window totals
+         $curr = Incident::query()
+               ->whereBetween($dateExpr, [$currFrom, $currTo])
+               ->whereHas('school', fn($q) => $q->where('division_id', $div->id))
+               ->selectRaw("
+                  COUNT(*) AS total,
+                  SUM(CASE WHEN {$statusNorm} IN ($resolvedIn) THEN 1 ELSE 0 END) AS resolved,
+                  SUM(CASE WHEN {$statusNorm} IN ($pendingIn)  THEN 1 ELSE 0 END) AS pending
+               ")
+               ->first();
 
          // previous window total for delta
-         $prevTotal = \App\Models\Incident::query()
-            ->whereBetween($dateExpr, [$prevFrom, $prevTo])
-            ->whereHas('school', fn($q) => $q->where('division_id', $div->id))
-            ->count();
+         $prevTotal = Incident::query()
+               ->whereBetween($dateExpr, [$prevFrom, $prevTo])
+               ->whereHas('school', fn($q) => $q->where('division_id', $div->id))
+               ->count();
 
          $deltaPct = $prevTotal > 0 ? round((($curr->total - $prevTotal) / $prevTotal) * 100, 2) : 0.0;
 
          // top hazards within current window
-         $hazards = \App\Models\Incident::query()
-            ->join('incident_types', 'incidents.type_id', '=', 'incident_types.id')
-            ->whereBetween($dateExpr, [$currFrom, $currTo])
-            ->whereHas('school', fn($q) => $q->where('division_id', $div->id))
-            ->groupBy('incidents.type_id', 'incident_types.name')
-            ->selectRaw('incidents.type_id, incident_types.name as type_name, COUNT(*) as total')
-            ->orderByDesc('total')
-            ->limit($topHazards)
-            ->get()
-            ->map(fn($r) => ['type_id' => (int) $r->type_id, 'name' => $r->type_name, 'count' => (int) $r->total])
-            ->values()
-            ->all();
+         $hazards = Incident::query()
+               ->join('incident_types', 'incidents.type_id', '=', 'incident_types.id')
+               ->whereBetween($dateExpr, [$currFrom, $currTo])
+               ->whereHas('school', fn($q) => $q->where('division_id', $div->id))
+               ->groupBy('incidents.type_id', 'incident_types.name')
+               ->selectRaw('incidents.type_id, incident_types.name AS type_name, COUNT(*) AS total')
+               ->orderByDesc('total')
+               ->limit($topHazards)
+               ->get()
+               ->map(fn($r) => [
+                  'type_id' => (int) $r->type_id,
+                  'name'    => $r->type_name,
+                  'count'   => (int) $r->total,
+               ])
+               ->values()
+               ->all();
 
-         $total = (int) ($curr->total ?? 0);
+         $total    = (int) ($curr->total ?? 0);
          $resolved = (int) ($curr->resolved ?? 0);
-         $pending = (int) ($curr->pending ?? 0);
-         $resRate = $total > 0 ? round(($resolved / $total) * 100, 2) : 0.0;
+         $pending  = (int) ($curr->pending ?? 0);
+         $resRate  = $total > 0 ? round(($resolved / $total) * 100, 2) : 0.0;
+
+         // ----- risk scoring (unchanged) -----
+         $studentsCount = (int) ($schoolsAgg->students ?? 0);
+         $incidentPer1k = $studentsCount > 0 ? ($total / $studentsCount) * 1000.0 : ($total > 0 ? 1000.0 : 0.0);
+         $pendingRatio  = $total > 0 ? $pending / $total : 0.0;
+         $deltaUp       = max(0.0, (float) $deltaPct);
+
+         $score  = min($incidentPer1k / 3.0, 1.0) * 40.0;
+         $score += min($pendingRatio / 0.5, 1.0) * 40.0;
+         $score += min($deltaUp / 25.0, 1.0) * 20.0;
+         $score = round($score, 1);
+
+         $riskLevel = $score >= 70 ? 'high_risk' : ($score >= 40 ? 'medium_risk' : 'low_risk');
+         $riskBadge = $riskLevel === 'high_risk' ? 'High Risk' : ($riskLevel === 'medium_risk' ? 'Medium Risk' : 'Low Risk');
 
          $cards[] = [
-            'division_id' => (int) $div->id,
-            'division_name' => $div->name,
-            'schools' => (int) ($schoolsAgg->schools ?? 0),
-            'students' => (int) ($schoolsAgg->students ?? 0),
-            'totals' => ['total' => $total, 'resolved' => $resolved, 'pending' => $pending],
-            'trend_delta_pct' => $deltaPct,
-            'common_hazards' => $hazards,
-            'resolution_rate' => $resRate,
+               'division_id'     => (int) $div->id,
+               'division_name'   => $div->name,
+               'schools'         => (int) ($schoolsAgg->schools ?? 0),
+               'students'        => (int) ($schoolsAgg->students ?? 0),
+               'totals'          => ['total' => $total, 'resolved' => $resolved, 'pending' => $pending],
+               'trend_delta_pct' => $deltaPct,
+               'common_hazards'  => $hazards,
+               'resolution_rate' => $resRate,
+               'risk' => [
+                  'level'   => $riskLevel,
+                  'score'   => $score,
+                  'badge'   => $riskBadge,
+                  'metrics' => [
+                     'incident_per_1k' => round($incidentPer1k, 2),
+                     'pending_ratio'   => round($pendingRatio, 3),
+                     'trend_up_pct'    => $deltaUp,
+                  ],
+               ],
          ];
       }
 
       return [
          'data' => $cards,
          'window' => [
-            'current' => [$currFrom->toDateString(), $currTo->toDateString()],
-            'previous' => [$prevFrom->toDateString(), $prevTo->toDateString()],
+               'current'  => [$currFrom->toDateString(), $currTo->toDateString()],
+               'previous' => [$prevFrom->toDateString(), $prevTo->toDateString()],
          ],
       ];
-
    }
 
     /** ---------------- School cards (paginated) ---------------- */
+   // public function getSchoolCards(array $filters): array
+   // {
+   //    $divisionId = $filters['division_id'] ?? null;
+   //    $q = $filters['q'] ?? null;
+   //    $risk = $filters['risk'] ?? null;
+   //    $perPage = max(1, (int) ($filters['per_page'] ?? 10));
+   //    $page = max(1, (int) ($filters['page'] ?? 1));
+   //    $dateFrom = $filters['date_from'] ?? null;
+   //    $dateTo = $filters['date_to'] ?? null;
+
+   //    // Window (default: current month)
+   //    $currFrom = $dateFrom ? now()->parse($dateFrom)->startOfDay() : now()->startOfMonth();
+   //    $currTo = $dateTo ? now()->parse($dateTo)->endOfDay() : now()->endOfMonth();
+
+   //    // Use reported_at/occurred_at when present
+   //    $dateExpr = DB::raw('COALESCE(incidents.reported_at, incidents.occurred_at, incidents.created_at)');
+
+   //    // Status buckets (adjust if your DB uses different values)
+   //    $resolvedStatuses = ["approved", "resolved", "closed"];
+   //    $pendingStatuses = ["open", "pending", "pending_review", "in_progress"];
+   //    $resolvedIn = "'" . implode("','", array_map('addslashes', $resolvedStatuses)) . "'";
+   //    $pendingIn = "'" . implode("','", array_map('addslashes', $pendingStatuses)) . "'";
+
+   //    // Base school list (filters + paging)
+   //    $schoolQuery = School::query()
+   //       ->when($divisionId, fn($qq) => $qq->where('division_id', $divisionId))
+   //       ->when($q, fn($qq) => $qq->where(function ($x) use ($q) {
+   //          $x->where('name', 'like', "%$q%")
+   //             ->orWhere('school_id_code', 'like', "%$q%");
+   //       }))
+   //       ->when($risk, fn($qq) => $qq->where('risk_status', $risk))
+   //       ->orderBy('name');
+
+   //    $totalSchools = (clone $schoolQuery)->count();
+
+   //    $schools = $schoolQuery
+   //       ->forPage($page, $perPage)
+   //       ->get(['id', 'name', 'division_id', 'student_count', 'risk_status', 'school_id_code']);
+
+   //    if ($schools->isEmpty()) {
+   //       return [
+   //          'data' => [],
+   //          'pagination' => [
+   //             'page' => $page,
+   //             'per_page' => $perPage,
+   //             'total' => 0,
+   //             'pages' => 0,
+   //          ],
+   //          'window' => [$currFrom->toDateString(), $currTo->toDateString()],
+   //       ];
+   //    }
+
+   //    $schoolIds = $schools->pluck('id')->all();
+
+   //    // -------- Aggregations (batched) --------
+
+   //    // Totals/resolved/pending per school (within window)
+   //    $totals = Incident::query()
+   //       ->whereIn('school_id', $schoolIds)
+   //       ->whereBetween($dateExpr, [$currFrom, $currTo])
+   //       ->groupBy('school_id')
+   //       ->selectRaw("
+   //          school_id,
+   //          COUNT(*) as total,
+   //          SUM(CASE WHEN incidents.status IN ($resolvedIn) THEN 1 ELSE 0 END) as resolved,
+   //          SUM(CASE WHEN incidents.status IN ($pendingIn)  THEN 1 ELSE 0 END) as pending
+   //      ")
+   //       ->get()
+   //       ->keyBy('school_id');
+
+   //    // Hazards per school (within window) → we’ll take top 3 per school
+   //    $hazardsRaw = Incident::query()
+   //       ->join('incident_types', 'incidents.type_id', '=', 'incident_types.id')
+   //       ->whereIn('incidents.school_id', $schoolIds)
+   //       ->whereBetween($dateExpr, [$currFrom, $currTo])
+   //       ->groupBy('incidents.school_id', 'incidents.type_id', 'incident_types.name')
+   //       ->selectRaw('incidents.school_id, incidents.type_id, incident_types.name as type_name, COUNT(*) as total')
+   //       ->orderBy('incidents.school_id')
+   //       ->orderByDesc('total')
+   //       ->get();
+
+   //    $hazardsBySchool = [];
+   //    foreach ($hazardsRaw as $row) {
+   //       $sid = (int) $row->school_id;
+   //       $hazardsBySchool[$sid] = $hazardsBySchool[$sid] ?? [];
+   //       $hazardsBySchool[$sid][] = [
+   //          'type_id' => (int) $row->type_id,
+   //          'name' => $row->type_name,
+   //          'count' => (int) $row->total,
+   //       ];
+   //    }
+   //    // Top 3 per school
+   //    foreach ($hazardsBySchool as $sid => $list) {
+   //       $hazardsBySchool[$sid] = array_slice($list, 0, 3);
+   //    }
+
+   //    // Last incident date (overall last, not windowed — matches your UI)
+   //    $lastIncident = Incident::query()
+   //       ->whereIn('school_id', $schoolIds)
+   //       ->groupBy('school_id')
+   //       ->selectRaw("school_id, MAX(COALESCE(occurred_at, reported_at, created_at)) as last_at")
+   //       ->get()
+   //       ->keyBy('school_id');
+
+   //    // -------- Compose payload --------
+   //    $items = [];
+   //    foreach ($schools as $s) {
+   //       $agg = $totals->get($s->id);
+   //       $total = (int) ($agg->total ?? 0);
+   //       $resolved = (int) ($agg->resolved ?? 0);
+   //       $pending = (int) ($agg->pending ?? 0);
+   //       $rate = $total > 0 ? round(($resolved / $total) * 100, 2) : 0.0;
+
+   //       $items[] = [
+   //          'school_id' => (int) $s->id,
+   //          'school_code' => $s->school_id,
+   //          'school_name' => $s->name,
+   //          'division_id' => (int) $s->division_id,
+   //          'students' => (int) ($s->student_count ?? 0),
+   //          'risk_status' => $s->risk_status,
+   //          'totals' => [
+   //             'total' => $total,
+   //             'resolved' => $resolved,
+   //             'pending' => $pending,
+   //          ],
+   //          'resolution_rate' => $rate,
+   //          'recent_hazards' => $hazardsBySchool[(int) $s->id] ?? [],
+   //          'last_incident_at' => optional($lastIncident->get($s->id))->last_at,
+   //       ];
+   //    }
+
+   //    return [
+   //       'data' => $items,
+   //       'pagination' => [
+   //          'page' => $page,
+   //          'per_page' => $perPage,
+   //          'total' => $totalSchools,
+   //          'pages' => (int) ceil($totalSchools / $perPage),
+   //       ],
+   //       'window' => [$currFrom->toDateString(), $currTo->toDateString()],
+   //    ];
+   // }
    public function getSchoolCards(array $filters): array
    {
       $divisionId = $filters['division_id'] ?? null;
@@ -251,11 +438,10 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
       // Use reported_at/occurred_at when present
       $dateExpr = DB::raw('COALESCE(incidents.reported_at, incidents.occurred_at, incidents.created_at)');
 
-      // Status buckets (adjust if your DB uses different values)
-      $resolvedStatuses = ["approved", "resolved", "closed"];
-      $pendingStatuses = ["open", "pending", "pending_review", "in_progress"];
-      $resolvedIn = "'" . implode("','", array_map('addslashes', $resolvedStatuses)) . "'";
-      $pendingIn = "'" . implode("','", array_map('addslashes', $pendingStatuses)) . "'";
+      // ✅ Status normalization (case/space/underscore/hyphen tolerant)
+      $statusNorm = "REPLACE(REPLACE(LOWER(incidents.status), '_', ' '), '-', ' ')";
+      $resolvedIn = "'approved','resolved','closed'";
+      $pendingIn = "'open','pending','under review','pending review','in progress'";
 
       // Base school list (filters + paging)
       $schoolQuery = School::query()
@@ -271,7 +457,8 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
 
       $schools = $schoolQuery
          ->forPage($page, $perPage)
-         ->get(['id', 'name', 'division_id', 'student_count', 'risk_status', 'school_id_code']);
+         // include alternates so we can coalesce later
+         ->get(['id', 'name', 'division_id', 'student_count', 'total_students', 'enrollment', 'risk_status', 'school_id_code']);
 
       if ($schools->isEmpty()) {
          return [
@@ -288,8 +475,6 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
 
       $schoolIds = $schools->pluck('id')->all();
 
-      // -------- Aggregations (batched) --------
-
       // Totals/resolved/pending per school (within window)
       $totals = Incident::query()
          ->whereIn('school_id', $schoolIds)
@@ -297,20 +482,20 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
          ->groupBy('school_id')
          ->selectRaw("
             school_id,
-            COUNT(*) as total,
-            SUM(CASE WHEN incidents.status IN ($resolvedIn) THEN 1 ELSE 0 END) as resolved,
-            SUM(CASE WHEN incidents.status IN ($pendingIn)  THEN 1 ELSE 0 END) as pending
+            COUNT(*) AS total,
+            SUM(CASE WHEN {$statusNorm} IN ($resolvedIn) THEN 1 ELSE 0 END) AS resolved,
+            SUM(CASE WHEN {$statusNorm} IN ($pendingIn)  THEN 1 ELSE 0 END) AS pending
         ")
          ->get()
          ->keyBy('school_id');
 
-      // Hazards per school (within window) → we’ll take top 3 per school
+      // Hazards per school (within window) → take top 3 per school
       $hazardsRaw = Incident::query()
          ->join('incident_types', 'incidents.type_id', '=', 'incident_types.id')
          ->whereIn('incidents.school_id', $schoolIds)
          ->whereBetween($dateExpr, [$currFrom, $currTo])
          ->groupBy('incidents.school_id', 'incidents.type_id', 'incident_types.name')
-         ->selectRaw('incidents.school_id, incidents.type_id, incident_types.name as type_name, COUNT(*) as total')
+         ->selectRaw('incidents.school_id, incidents.type_id, incident_types.name AS type_name, COUNT(*) AS total')
          ->orderBy('incidents.school_id')
          ->orderByDesc('total')
          ->get();
@@ -318,14 +503,13 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
       $hazardsBySchool = [];
       foreach ($hazardsRaw as $row) {
          $sid = (int) $row->school_id;
-         $hazardsBySchool[$sid] = $hazardsBySchool[$sid] ?? [];
+         $hazardsBySchool[$sid] ??= [];
          $hazardsBySchool[$sid][] = [
             'type_id' => (int) $row->type_id,
             'name' => $row->type_name,
             'count' => (int) $row->total,
          ];
       }
-      // Top 3 per school
       foreach ($hazardsBySchool as $sid => $list) {
          $hazardsBySchool[$sid] = array_slice($list, 0, 3);
       }
@@ -334,11 +518,11 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
       $lastIncident = Incident::query()
          ->whereIn('school_id', $schoolIds)
          ->groupBy('school_id')
-         ->selectRaw("school_id, MAX(COALESCE(occurred_at, reported_at, created_at)) as last_at")
+         ->selectRaw("school_id, MAX(COALESCE(occurred_at, reported_at, created_at)) AS last_at")
          ->get()
          ->keyBy('school_id');
 
-      // -------- Compose payload --------
+      // Compose payload
       $items = [];
       foreach ($schools as $s) {
          $agg = $totals->get($s->id);
@@ -349,16 +533,12 @@ class AnalyticsRepository implements AnalyticsRepositoryInterface
 
          $items[] = [
             'school_id' => (int) $s->id,
-            'school_code' => $s->school_id,
+            'school_code' => $s->school_id_code,                         // ✅ correct field
             'school_name' => $s->name,
             'division_id' => (int) $s->division_id,
-            'students' => (int) ($s->student_count ?? 0),
+            'students' => (int) ($s->student_count ?? $s->total_students ?? $s->enrollment ?? 0), // ✅ coalesce
             'risk_status' => $s->risk_status,
-            'totals' => [
-               'total' => $total,
-               'resolved' => $resolved,
-               'pending' => $pending,
-            ],
+            'totals' => ['total' => $total, 'resolved' => $resolved, 'pending' => $pending],
             'resolution_rate' => $rate,
             'recent_hazards' => $hazardsBySchool[(int) $s->id] ?? [],
             'last_incident_at' => optional($lastIncident->get($s->id))->last_at,

@@ -50,3 +50,7 @@ php artisan config:cache
 - add `student_count` in school table
 - add `status`, `beneficiaries_count` in program table
 
+Todays Milestones:
+- fix the retrieval of single incident details ✅
+- activity-log entity CRUD ✅
+- integration of activity-log to user actions

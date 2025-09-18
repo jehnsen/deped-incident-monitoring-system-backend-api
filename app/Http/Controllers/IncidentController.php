@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Incident\ReviewIncidentRequest;
 use App\Http\Requests\Incident\StoreIncidentRequest;
 use App\Http\Requests\Incident\UpdateIncidentRequest;
 use App\Http\Resources\IncidentDetailsResource;
@@ -75,6 +76,13 @@ class IncidentController extends Controller
     public function details(int $id)
     {
         $incident = $this->service->getDetails($id);
+        return $incident;//new IncidentDetailsResource($incident);
+    }
+
+    public function review(ReviewIncidentRequest $request, int $id): IncidentDetailsResource
+    {
+        $incident = $this->service->review($id, $request->validated(), $request);
+        // Return the fresh incident with relateds (same resource you already use)
         return new IncidentDetailsResource($incident);
     }
 }
